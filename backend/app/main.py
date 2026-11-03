@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Depends
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,7 +7,11 @@ import os
 import json
 import asyncio
 import time
-from google import genai
+from google import genai 
+from google.genai import types 
+from fastapi.responses import StreamingResponse
+import io, csv
+
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
@@ -61,6 +65,9 @@ Do not include any text outside the JSON object.
                 resp = client.models.generate_content(
                     model=model_name,
                     contents=[prompt, uploaded],
+                    config=types.GenerateContentConfig(
+                        http_options=types.HttpOptions(timeout=10_000)  # 10s in ms
+                  ),
                 )
                 return resp.text
             except Exception as e:
@@ -179,6 +186,72 @@ async def cross_check(shipment_id: str, db: AsyncSession = Depends(database.get_
         "message": "✅ All weights match" if is_consistent else "❌ Mismatch detected - requires review"
     }
 
+@app.get("/api/shipments")
+async def list_shipments(db: AsyncSession = Depends(database.get_db)):
+    """List all shipments with their document count and status."""
+    result = await db.execute(
+        select(models.Shipment).order_by(models.Shipment.created_at.desc())
+    )
+    shipments = result.scalars().all()
+
+    output = []
+    for s in shipments:
+        # Count documents for this shipment
+        doc_result = await db.execute(
+            select(models.Document).where(models.Document.shipment_id == s.id)
+        )
+        docs = doc_result.scalars().all()
+        output.append({
+            "shipment_id": s.shipment_id,
+            "status": s.status,
+            "document_count": len(docs),
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+        })
+
+    return {"shipments": output}
+
+@app.get("/api/shipments/{shipment_id}/export")
+async def export_csv(shipment_id: str, db: AsyncSession = Depends(database.get_db)):
+    """Export shipment data as CSV in the customs filing layout."""
+    result = await db.execute(
+        select(models.Shipment).where(models.Shipment.shipment_id == shipment_id)
+    )
+    shipment = result.scalar_one_or_none()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+
+    # Fetch all documents
+    doc_result = await db.execute(
+        select(models.Document).where(models.Document.shipment_id == shipment.id)
+    )
+    documents = doc_result.scalars().all()
+
+    # Build CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Shipment ID", "Document Type", "Invoice Number",
+        "Supplier Name", "Invoice Total", "Gross Weight"
+    ])
+    for doc in documents:
+        data = doc.extracted_data or {}
+        writer.writerow([
+            shipment_id,
+            doc.doc_type,
+            data.get("invoice_number", {}).get("value", ""),
+            data.get("supplier_name", {}).get("value", ""),
+            data.get("invoice_total", {}).get("value", ""),
+            data.get("gross_weight", {}).get("value", ""),
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=shipment-{shipment_id}.csv"
+        }
+    )
 
 @app.get("/health")
 async def health():
