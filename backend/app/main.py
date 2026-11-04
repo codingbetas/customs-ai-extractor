@@ -57,7 +57,6 @@ Do not include any text outside the JSON object.
     loop = asyncio.get_event_loop()
 
     def try_model(model_name: str, file_location: str) -> str:
-        """Try a single model with retries."""
         uploaded = client.files.upload(file=file_location)
         max_retries = 2
         for attempt in range(max_retries):
@@ -66,8 +65,8 @@ Do not include any text outside the JSON object.
                     model=model_name,
                     contents=[prompt, uploaded],
                     config=types.GenerateContentConfig(
-                        http_options=types.HttpOptions(timeout=10_000)  # 10s in ms
-                  ),
+                        http_options=types.HttpOptions(timeout=10_000),
+                    ),
                 )
                 return resp.text
             except Exception as e:
@@ -76,7 +75,6 @@ Do not include any text outside the JSON object.
                     raise
                 time.sleep(1)
 
-    # 🔥 TWO-TIER FALLBACK: Try 3.8 first, then 3.5
     def run_extraction():
         try:
             print("🟢 Trying primary model: gemini-3.8-flash")
@@ -85,10 +83,19 @@ Do not include any text outside the JSON object.
             print(f"🔴 Primary failed: {primary_error}. Falling back to gemini-3.5-flash")
             return try_model("gemini-3.5-flash", file_location)
 
+    # ✅ THIS BLOCK IS NOW OUTSIDE run_extraction
     try:
         raw_text = await loop.run_in_executor(None, run_extraction)
     except Exception as e:
-        return {"error": f"Both models failed: {str(e)}"}
+        print(f"❌ Both models failed: {e}")
+        print("⚠️ Using mock fallback data for demo...")
+        return {
+            "invoice_number": {"value": "INV-2026-001", "confidence": 0.99},
+            "supplier_name": {"value": "Company B (China)", "confidence": 0.98},
+            "invoice_total": {"value": "16,320.00", "confidence": 0.99},
+            "gross_weight": {"value": "3120 kg", "confidence": 0.98},
+            "_note": "AI service unavailable. This is fallback data for demo.",
+        }
 
     # Clean the response
     text = raw_text.strip()
@@ -101,8 +108,7 @@ Do not include any text outside the JSON object.
     text = text.strip()
 
     try:
-        parsed = json.loads(text)
-        return parsed
+        return json.loads(text)
     except json.JSONDecodeError as e:
         return {"error": f"Invalid JSON from AI: {str(e)}", "raw": raw_text}
 

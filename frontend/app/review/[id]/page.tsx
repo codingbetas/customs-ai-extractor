@@ -13,6 +13,19 @@ export default function ReviewPage({
   const [shipment, setShipment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState("executive");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("role");
+    if (saved) setRole(saved);
+
+    const handleRoleChange = () => {
+      const newRole = localStorage.getItem("role");
+      if (newRole) setRole(newRole);
+    };
+    window.addEventListener("roleChange", handleRoleChange);
+    return () => window.removeEventListener("roleChange", handleRoleChange);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,6 +49,14 @@ export default function ReviewPage({
       `http://localhost:8000/api/shipments/${shipmentId}/export`,
       "_blank"
     );
+  };
+
+  const approveShipment = async () => {
+    await fetch(
+      `http://localhost:8000/api/shipments/${shipmentId}/approve`,
+      { method: "POST" }
+    );
+    alert(`Shipment ${shipmentId} approved!`);
   };
 
   return (
@@ -113,6 +134,20 @@ export default function ReviewPage({
             >
               📥 Export to CSV
             </button>
+
+            {role === "manager" && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 mb-2">
+                  Manager action: Review and approve this shipment.
+                </p>
+                <button
+                  onClick={approveShipment}
+                  className="w-full bg-green-600 text-white py-2.5 rounded-md font-medium hover:bg-green-700 transition"
+                >
+                  ✅ Approve Shipment
+                </button>
+              </div>
+            )}
           </>
         )}
       </main>

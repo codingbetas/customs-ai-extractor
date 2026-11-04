@@ -20,7 +20,7 @@ export default function Home() {
     try {
       const res = await fetch(
         `http://localhost:8000/api/upload/${shipmentId}?doc_type=${docType}`,
-        { method: "POST", body: formData }
+        { method: "POST", body: formData },
       );
       const data = await res.json();
       setResult(data);
@@ -36,7 +36,10 @@ export default function Home() {
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-xl font-semibold text-gray-900">Customs AI</h1>
-          <Link href="/shipments" className="text-sm text-gray-600 hover:text-gray-900">
+          <Link
+            href="/shipments"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
             Shipment List →
           </Link>
         </div>
@@ -48,7 +51,8 @@ export default function Home() {
           Upload a Document
         </h2>
         <p className="text-gray-600 mb-8">
-          Our AI will extract the fields and check them against your other documents.
+          Our AI will extract the fields and check them against your other
+          documents.
         </p>
 
         <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -100,40 +104,63 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Result */}
-        {result && (
-          <div className="mt-6 bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-3">Extracted Fields</h3>
-            <div className="space-y-2">
-              {Object.entries(result.extracted || {}).map(([key, field]: any) => (
-                <div
-                  key={key}
-                  className="flex justify-between items-center py-2 border-b border-gray-100"
-                >
-                  <span className="text-sm font-medium text-gray-700 capitalize">
-                    {key.replace(/_/g, " ")}
-                  </span>
-                  <span className="text-sm text-gray-900">{field.value || "—"}</span>
-                  <span
-                    className={
-                      field.confidence > 0.8
-                        ? "text-green-600 text-xs font-semibold"
-                        : "text-red-600 text-xs font-semibold"
-                    }
-                  >
-                    {(field.confidence * 100).toFixed(0)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-            <Link
-              href={`/review/${shipmentId}`}
-              className="mt-4 block text-center bg-gray-900 text-white py-2.5 rounded-md font-medium hover:bg-gray-800 transition"
-            >
-              Open Review Screen →
-            </Link>
+        {result && result.extracted?.error ? (
+          <div className="mt-6 bg-red-50 border border-red-200 p-4 rounded-lg">
+            <p className="text-red-800 font-medium">
+              ❌ AI extraction failed: {result.extracted.error}
+            </p>
+            <p className="text-sm text-red-600 mt-1">
+              This can happen when the AI service is overloaded. Please try
+              again in a minute.
+            </p>
           </div>
-        )}
+        ) : result ? (
+          <>
+            <div className="mt-6 bg-green-50 border border-green-200 p-4 rounded-lg">
+              <p className="text-green-800 font-medium">
+                ✅ Document uploaded successfully!
+              </p>
+            </div>
+
+            <div className="mt-4 bg-white p-6 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-900 mb-3">
+                Extracted Fields
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(result.extracted || {}).map(
+                  ([key, field]: any) => (
+                    <div
+                      key={key}
+                      className="flex justify-between items-center py-2 border-b border-gray-100"
+                    >
+                      <span className="text-sm font-medium text-gray-700 capitalize">
+                        {key.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-sm text-gray-900">
+                        {field.value || "—"}
+                      </span>
+                      <span
+                        className={
+                          field.confidence > 0.8
+                            ? "text-green-600 text-xs font-semibold"
+                            : "text-red-600 text-xs font-semibold"
+                        }
+                      >
+                        {(field.confidence * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+              <a
+                href={`/review/${shipmentId}`}
+                className="mt-4 block text-center bg-gray-900 text-white py-2.5 rounded-md font-medium hover:bg-gray-800 transition"
+              >
+                Open Review Screen →
+              </a>
+            </div>
+          </>
+        ) : null}
       </main>
     </div>
   );
