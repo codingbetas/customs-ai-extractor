@@ -1,343 +1,474 @@
-DEPLOYMENT GUIDE
-Customs AI Extractor
 
-GitHub Repository: https://github.com/codingbetas/customs-ai-extractor
+# Customs AI Extractor
 
-Live Application: Local Demo Only
-Demo Video: https://www.loom.com/share/51ef80d696564cd4924bae45bd06bf08
+**AI-Powered Customs Documentation and Shipment Information Extraction**
 
+An AI-powered document processing application designed to automate shipment information extraction from commercial invoices, packing lists, and Bills of Lading using Google Gemini AI.
 
-1. Project Overview
+**GitHub Repository:** https://github.com/codingbetas/customs-ai-extractor
 
-The Customs AI Extractor is an AI-powered document processing application designed to automate shipment information extraction from commercial invoices, packing lists, and Bills of Lading.
+**Demo Video:** https://www.loom.com/share/51ef80d696564cd4924bae45bd06bf08
 
-The application uses:
+**Project Status:** Local Demo Only
 
-Next.js for the frontend.
-Python FastAPI for the backend.
-PostgreSQL for database management.
-Google Gemini AI for document extraction.
+---
 
-This guide explains how to configure and run the application locally.
+## Table of Contents
 
-2. Prerequisites
+- [1. Project Overview](#1-project-overview)
+- [2. Technology Stack](#2-technology-stack)
+- [3. Prerequisites](#3-prerequisites)
+- [4. Local Installation and Setup](#4-local-installation-and-setup)
+- [5. Environment Variables](#5-environment-variables)
+- [6. Database Setup](#6-database-setup)
+- [7. Running the Application](#7-running-the-application)
+- [8. Demo Login and User Roles](#8-demo-login-and-user-roles)
+- [9. Application Workflow](#9-application-workflow)
+- [10. Deployment Architecture](#10-deployment-architecture)
+- [11. Troubleshooting](#11-troubleshooting)
+- [12. Current Limitations](#12-current-limitations)
+- [13. Future Enhancements](#13-future-enhancements)
+- [14. Conclusion](#14-conclusion)
 
-Before starting, ensure the following software and credentials are available:
+---
 
-Requirement	Version
-Python	3.10 or higher
-Node.js	18 or higher
-PostgreSQL	16
-npm	Included with Node.js
-Google Gemini API Key	Required
-Git	Latest stable version
+## 1. Project Overview
 
-You will also need a working internet connection to communicate with the Gemini API.
+The **Customs AI Extractor** is an AI-powered document processing application designed to automate the extraction and validation of shipment information from customs-related documents.
 
-3. Local Installation and Setup
-Step 1: Clone the Repository
+The application supports the following document types:
+
+- Commercial Invoices
+- Packing Lists
+- Bills of Lading (BoL)
+
+It uses Google Gemini AI to extract shipment information, evaluate confidence scores, and identify inconsistencies across multiple documents.
+
+### Key Features
+
+- Upload and process shipment documents.
+- AI-powered information extraction using Google Gemini.
+- View extracted shipment details.
+- Review field-level confidence scores.
+- Perform cross-document validation.
+- Identify mismatches and discrepancies.
+- Support role-based workflow demonstrations.
+- Approve shipments through the Manager interface.
+- Export approved shipment information as CSV.
+
+## 2. Technology Stack
+
+| Component | Technology |
+|---|---|
+| Frontend | Next.js |
+| Backend | Python FastAPI |
+| Database | PostgreSQL 16 |
+| AI Engine | Google Gemini AI |
+| Database Driver | asyncpg |
+| Frontend Package Manager | npm |
+| Backend Package Manager | pip |
+
+## 3. Prerequisites
+
+Before installing the application, ensure the following software and credentials are available.
+
+| Requirement | Version |
+|---|---|
+| Python | 3.10 or higher |
+| Node.js | 18 or higher |
+| PostgreSQL | 16 |
+| npm | Included with Node.js |
+| Git | Latest stable version |
+| Google Gemini API Key | Required |
+
+An active internet connection is required for communication with the Gemini API.
+
+## 4. Local Installation and Setup
+
+### Step 1: Clone the Repository
 
 Open a terminal and execute:
 
-bash
+```bash
 git clone https://github.com/codingbetas/customs-ai-extractor.git
+```
 
+Navigate to the project directory:
 
-Navigate into the project directory:
-
-bash
+```bash
 cd customs-ai-extractor
+```
 
+The project contains separate `frontend` and `backend` directories.
 
-The project contains separate frontend and backend directories.
-
-Step 2: Backend Setup
+### Step 2: Backend Setup
 
 Navigate to the backend directory:
 
-bash
+```bash
 cd backend
-
+```
 
 Create a Python virtual environment:
 
-bash
+```bash
 python -m venv venv
+```
 
-Activate the Virtual Environment
+**Activate the virtual environment:**
 
 Windows (Command Prompt):
 
-bash
+```bash
 venv\Scripts\activate.bat
-
+```
 
 Windows (PowerShell):
 
-powershell
+```powershell
 .\venv\Scripts\Activate.ps1
-
+```
 
 Linux / macOS:
 
-bash
+```bash
 source venv/bin/activate
+```
 
-Install Backend Dependencies
-bash
+**Install backend dependencies:**
+
+```bash
 pip install -r requirements.txt
-
+```
 
 This installs the Python packages required by the FastAPI backend.
 
-Step 3: Configure Environment Variables
+### Step 3: Configure Environment Variables
 
-Create a .env file inside the backend/ directory.
+Create a `.env` file inside the `backend/` directory.
 
 Add the following configuration:
 
-env
+```env
 DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/customs_ai
 
 GEMINI_API_KEY=your_gemini_api_key_here
-
+```
 
 Replace the placeholder values with your actual PostgreSQL password and Gemini API key.
 
-Important:
+**Security Considerations:**
 
-Never share your Gemini API key publicly.
-Do not commit the .env file to GitHub.
-Ensure .env is included in .gitignore.
-Keep environment variables on the backend rather than exposing them through the frontend.
-Step 4: Create the PostgreSQL Database
+- Never share your Gemini API key publicly.
+- Do not commit the `.env` file to GitHub.
+- Ensure `.env` is included in `.gitignore`.
+- Keep sensitive environment variables on the backend.
+- Never expose API keys through frontend environment variables.
 
-Ensure that PostgreSQL is installed and running.
+### Step 4: Configure PostgreSQL
 
-Open a terminal and execute:
+Ensure PostgreSQL is installed and running.
 
-bash
+Create the application database:
+
+```bash
 psql -U postgres -c "CREATE DATABASE customs_ai;"
-
+```
 
 Enter your PostgreSQL password when prompted.
 
 The database will be created with the name:
 
+```text
 customs_ai
+```
 
-Note: Database tables must also be initialized using the project's existing migration or table-creation process, if applicable.
+**Note:** Database tables must also be initialized using the project's existing migration or table-creation process, if applicable.
 
-Step 5: Start the FastAPI Backend
+## 5. Environment Variables
 
-Make sure you are inside the backend/ directory and your virtual environment is activated.
+The application requires the following environment variables.
 
-Run:
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string using the asyncpg driver |
+| `GEMINI_API_KEY` | Google Gemini API key used for AI-powered document extraction |
 
-bash
-uvicorn app.main:app --reload
+### Example Configuration
 
-
-The backend server will start at:
-
-Backend URL: http://localhost:8000
-
-API Documentation (Swagger UI): http://localhost:8000/docs
-
-The Swagger interface allows developers to inspect and test available API endpoints.
-
-4. Frontend Setup
-
-Open a new terminal window.
-
-Navigate to the frontend directory from the project root:
-
-bash
-cd frontend
-
-
-Install the required Node.js dependencies:
-
-bash
-npm install
-
-
-Start the Next.js development server:
-
-bash
-npm run dev
-
-
-The frontend application will be available at:
-
-Frontend URL: http://localhost:3000
-
-Open this URL in your browser to access the Customs AI Extractor application.
-
-Keep both the frontend and backend servers running while using the application.
-
-5. Environment Variables
-
-The application requires the following environment variables:
-
-Variable	Description
-DATABASE_URL	PostgreSQL connection string using the asyncpg driver
-GEMINI_API_KEY	Google Gemini API key used for AI-powered document extraction
-Example Configuration
-env
+```env
 DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/customs_ai
 
 GEMINI_API_KEY=your_gemini_api_key_here
+```
 
+**Security Note:** The backend `.env` file must be excluded from version control. Never commit database passwords, API keys, or other sensitive credentials.
 
-Security Note:
+## 6. Database Setup
 
-All sensitive configuration values are stored in the backend .env file, which should be excluded from version control using .gitignore.
+The application uses PostgreSQL for storing shipment-related information.
 
-No API keys or database passwords should be committed to the GitHub repository.
+| Property | Value |
+|---|---|
+| Database | `customs_ai` |
+| Host | `localhost` |
+| Port | `5432` |
+| Driver | `asyncpg` |
+| Username | `postgres` |
 
-6. Demo Login and User Roles
+Ensure that:
 
-The application currently uses a Role Toggle in the top-right corner of the interface to simulate two user roles.
+- PostgreSQL is running.
+- The `customs_ai` database exists.
+- Database credentials are correct.
+- Required database tables are initialized.
+- The backend can successfully connect to PostgreSQL.
 
-No username or password is required for the local demo.
+## 7. Running the Application
 
-Available Demo Roles
+Both frontend and backend servers must be running simultaneously.
 
-Documentation Executive
+### Step 1: Start the Backend
 
-Permissions:
+Open a terminal and navigate to the backend directory:
 
-Upload shipment documents.
-View uploaded documents.
-View AI-extracted information.
-Review confidence scores.
-View cross-document validation results.
-Identify mismatches requiring attention.
+```bash
+cd backend
+```
 
-Manager
+Activate the Python virtual environment if it is not already active.
 
-Permissions:
+Start the FastAPI development server:
 
-Perform all Documentation Executive operations.
-Review shipment information.
-Approve shipments.
-Authorize final CSV export.
-Role-Based Workflow
+```bash
+uvicorn app.main:app --reload
+```
 
-The role toggle is provided for demonstration purposes.
+The backend will be available at:
 
-In a production environment, it should be replaced with proper authentication and server-side role-based access control.
+- **Backend API:** http://localhost:8000
+- **Swagger API Documentation:** http://localhost:8000/docs
 
-7. Deployment Architecture
+The Swagger UI allows developers to inspect and test available API endpoints.
+
+### Step 2: Start the Frontend
+
+Open a new terminal window.
+
+Navigate to the frontend directory:
+
+```bash
+cd frontend
+```
+
+Install frontend dependencies:
+
+```bash
+npm install
+```
+
+Start the Next.js development server:
+
+```bash
+npm run dev
+```
+
+The frontend will be available at:
+
+**http://localhost:3000**
+
+Open this URL in your browser to access the Customs AI Extractor application.
+
+Keep both frontend and backend servers running while using the application.
+
+## 8. Demo Login and User Roles
+
+The current application uses a **Role Toggle** in the top-right corner to simulate two different user roles.
+
+No username or password is required for the local demonstration.
+
+### Documentation Executive
+
+**Permissions:**
+
+- Upload shipment documents.
+- View uploaded documents.
+- View AI-extracted information.
+- Review confidence scores.
+- View cross-document validation results.
+- Identify mismatches requiring attention.
+
+### Manager
+
+**Permissions:**
+
+- Perform all Documentation Executive operations.
+- Review shipment information.
+- Approve shipments.
+- Authorize final CSV exports.
+
+### Role-Based Workflow
+
+The role toggle is provided exclusively for demonstration purposes.
+
+For production deployment, it should be replaced with proper authentication and server-side role-based access control (RBAC).
+
+## 9. Application Workflow
+
+Follow these steps to test the application:
+
+1. Open the application at http://localhost:3000.
+2. Select the **Documentation Executive** role.
+3. Create or select a shipment.
+4. Upload the required shipment documents.
+5. Allow Gemini AI to process the documents and extract information.
+6. Review the extracted fields and confidence scores.
+7. Check cross-document validation results.
+8. Identify and review any mismatches.
+9. Switch to the **Manager** role.
+10. Review and approve the shipment.
+11. Export the approved shipment information as a CSV file.
+
+## 10. Deployment Architecture
 
 The current application is designed to run locally for demonstration purposes.
 
-The following architecture represents the proposed production deployment.
+The following architecture represents the proposed production deployment strategy.
 
-Component	Technology	Deployment Plan
-Frontend	Next.js	Vercel
-Backend	Python FastAPI	Docker on AWS ECS
-Database	PostgreSQL	AWS RDS Mumbai Region
-AI Engine	Google Gemini AI	Google AI Studio API
-Document Storage	File storage	Secure cloud storage
-Production Deployment Strategy
+### Proposed Infrastructure
 
-Frontend: Vercel
+| Component | Technology | Deployment Plan |
+|---|---|---|
+| Frontend | Next.js | Vercel |
+| Backend | Python FastAPI | Docker on AWS ECS |
+| Database | PostgreSQL | AWS RDS (Mumbai Region) |
+| AI Engine | Google Gemini AI | Google AI Studio API |
+| Document Storage | Cloud File Storage | Secure cloud storage |
 
-The Next.js frontend can be deployed using Vercel for hosting and frontend delivery.
+### Production Deployment Strategy
 
-Backend: AWS ECS
+#### Frontend - Vercel
 
-The FastAPI backend can be containerized using Docker and deployed through AWS Elastic Container Service (ECS).
+The Next.js frontend can be deployed using Vercel for application hosting and frontend delivery.
 
-Database: AWS RDS
+#### Backend - AWS ECS
+
+The FastAPI backend can be containerized using Docker and deployed through Amazon Elastic Container Service (ECS).
+
+#### Database - AWS RDS
 
 PostgreSQL can be hosted using Amazon RDS in the Mumbai region to support the application's data residency and infrastructure requirements.
 
-AI Engine: Google Gemini
+#### AI Engine - Google Gemini
 
-The application communicates with the configured Google Gemini API for document extraction.
+The application communicates with the configured Google Gemini API for AI-powered document extraction.
 
-The selected model, API availability, data processing terms, and applicable privacy requirements must be verified before production deployment.
+Before production deployment, verify:
 
-Document Storage
+- Selected Gemini model availability.
+- API usage limits and pricing.
+- Data processing terms.
+- Applicable privacy and compliance requirements.
 
-For production, uploaded shipment documents should be stored in secure cloud storage with appropriate access restrictions and encryption.
+#### Document Storage - Secure Cloud Storage
 
-8. Application Workflow
+For production environments, uploaded shipment documents should be stored in secure cloud storage with:
 
-Once both frontend and backend servers are running, the application follows this workflow:
+- Encryption at rest and in transit.
+- Appropriate access restrictions.
+- Secure document retrieval.
+- Defined retention and deletion policies.
 
-Open the application at http://localhost:3000.
-Select the Documentation Executive role.
-Create or select a shipment.
-Upload the required shipment documents.
-Allow Gemini AI to process and extract the document information.
-Review extracted fields and their confidence scores.
-Check cross-document validation results.
-Switch to the Manager role.
-Review and approve the shipment.
-Export the approved shipment information as a CSV file.
-9. Troubleshooting
-Backend Server Does Not Start
+## 11. Troubleshooting
+
+### Backend Server Does Not Start
 
 Check the following:
 
-Python is installed correctly.
-The virtual environment is activated.
-All dependencies are installed.
-The .env file exists in the backend directory.
-The PostgreSQL service is running.
-Database Connection Error
+- Python is installed correctly.
+- The virtual environment is activated.
+- All backend dependencies are installed.
+- The `.env` file exists inside the backend directory.
+- PostgreSQL is running.
+
+### Database Connection Error
 
 Verify:
 
-PostgreSQL is running.
-The database customs_ai exists.
-The username and password are correct.
-The DATABASE_URL uses the correct port and database name.
-The required database tables have been initialized.
-Gemini API Error
+- PostgreSQL is running.
+- The `customs_ai` database exists.
+- Database username and password are correct.
+- The `DATABASE_URL` uses the correct port and database name.
+- Required database tables have been initialized.
+
+### Gemini API Error
 
 Verify:
 
-The Gemini API key is valid.
-The API key is correctly configured in .env.
-The backend can access the internet.
-The selected model is available to your API account.
+- The Gemini API key is valid.
+- The API key is correctly configured in `.env`.
+- The backend has internet access.
+- The selected Gemini model is available to your API account.
 
 Temporary API errors such as HTTP 503 or 504 may require retrying the request or using the configured fallback model.
 
-Frontend Cannot Connect to Backend
+### Frontend Cannot Connect to Backend
 
 Verify:
 
-The FastAPI server is running on port 8000.
-The frontend is configured with the correct backend API URL.
-Backend CORS settings permit the frontend origin.
-10. Current Limitations
+- FastAPI is running on port `8000`.
+- The frontend is configured with the correct backend API URL.
+- Backend CORS settings permit the frontend origin.
+- Both development servers are running.
 
-The current version is intended as a local demonstration.
+## 12. Current Limitations
+
+The current version is intended for local demonstration purposes.
 
 The following production features may require additional configuration or implementation:
 
-Production authentication and authorization.
-Cloud hosting and deployment.
-Secure cloud document storage.
-Production database backups.
-Advanced audit logging.
-Automated monitoring and error reporting.
-Production-grade data retention and deletion policies.
+- Production authentication and authorization.
+- Cloud hosting and deployment.
+- Secure cloud document storage.
+- Production database backups.
+- Advanced audit logging.
+- Automated monitoring and error reporting.
+- Production-grade data retention and deletion policies.
 
-The demo uses a role toggle rather than production authentication.
+**Note:** The demo currently uses a role toggle instead of production authentication.
 
-11. Conclusion
+## 13. Future Enhancements
 
-The Customs AI Extractor provides a local demonstration of an AI-powered customs documentation workflow.
+Potential improvements for future releases include:
 
-By combining Next.js, FastAPI, PostgreSQL, and Google Gemini AI, the application demonstrates automated document upload, information extraction, validation, manager approval, and CSV export.
+- Secure user authentication and authorization.
+- Advanced role-based access control.
+- Automated cloud deployment.
+- Secure document storage integration.
+- Enhanced audit trails and activity monitoring.
+- Improved document validation and exception handling.
+- Automated database backup and recovery.
+- Production monitoring and alerting.
 
-The deployment structure is designed to support future migration from a local development environment to a scalable cloud-based production architecture.
+## 14. Conclusion
 
-End of Deployment Guide
+The **Customs AI Extractor** demonstrates how artificial intelligence can automate customs documentation workflows.
+
+By combining Next.js, FastAPI, PostgreSQL, and Google Gemini AI, the application provides a demonstration of:
+
+- Automated document uploads.
+- AI-powered information extraction.
+- Confidence score evaluation.
+- Cross-document validation.
+- Manager approval workflows.
+- CSV export of approved shipment information.
+
+The deployment structure is designed to support future migration from a local development environment to a scalable, cloud-based production architecture.
+
+---
+
+**Repository:** https://github.com/codingbetas/customs-ai-extractor
+
+**Demo Video:** https://www.loom.com/share/51ef80d696564cd4924bae45bd06bf08
+
+**Deployment Status:** Local Demo Only
