@@ -311,8 +311,8 @@ The following capabilities are outside the scope of the current implementation:
 
 Software Developer | Backend Engineering | AI & Machine Learning
 
-- GitHub: YOUR_GITHUB_PROFILE_URL
-- LinkedIn: YOUR_LINKEDIN_PROFILE_URL
+- GitHub: [https://github.com/codingbetas](https://github.com/codingbetas)
+- LinkedIn: [https://www.linkedin.com/in/himanshu-rathod-5815991bb/](https://www.linkedin.com/in/himanshu-rathod-5815991bb/)
 
 ---
 
